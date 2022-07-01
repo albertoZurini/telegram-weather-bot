@@ -1,6 +1,8 @@
 package weather_handler
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -22,8 +24,9 @@ func NewWeatherHandler(token string) (*WeatherHandlerAPI, error) {
 
 func NewWeatherHandlerWithClient(token, apiEndpoint string, client HTTPClient) (*WeatherHandlerAPI, error) {
 	wa := &WeatherHandlerAPI{
-		Token:       token,
-		Client:      client,
+		Token:  token,
+		Client: client,
+
 		apiEndpoint: apiEndpoint,
 	}
 
@@ -31,12 +34,26 @@ func NewWeatherHandlerWithClient(token, apiEndpoint string, client HTTPClient) (
 }
 
 type WeatherInformation struct {
-	currentWeather string
+	CurrentWeather string
 }
 
-func (bot *WeatherHandlerAPI) GetWeatherForLocation(location string) (*WeatherInformation, error) {
+func (wh *WeatherHandlerAPI) GetWeatherForLocation(location string) (*WeatherInformation, error) {
+	endPoint := fmt.Sprintf("%s/current?access_key=%s&query=%s", wh.apiEndpoint, wh.Token, location)
+
+	resp, err := http.Get(endPoint)
+
+	if err != nil {
+		return nil, err
+	}
+
+	weatherInfo, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
 	wi := &WeatherInformation{
-		currentWeather: "diocane",
+		CurrentWeather: string(weatherInfo),
 	}
 
 	return wi, nil
