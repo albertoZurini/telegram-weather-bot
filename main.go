@@ -87,7 +87,7 @@ func main() {
 
 			wi, err := weather.GetWeatherForLocation(update.Message.Text)
 
-			if err != nil {
+			if err == nil {
 				msg.Text = wi.CurrentWeather
 			} else {
 				msg.Text = err.Error()
