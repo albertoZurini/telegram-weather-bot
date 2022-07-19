@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"github.com/albertoZurini/telegram-weather-bot/utils"
 	"os"
 	"strings"
 
@@ -11,13 +11,16 @@ import (
 )
 
 func main() {
+	utils.SetupLogger()
+	logger := utils.Logger
+
 	telegramToken := os.Getenv("TELEGRAM_API_TOKEN")
 
 	// Init Telegram
 	bot, err := tgbotapi.NewBotAPI(telegramToken)
 
 	if err != nil {
-		log.Panic(err)
+		logger.Panic(err.Error())
 	}
 
 	bot.Debug = true
@@ -25,7 +28,7 @@ func main() {
 	weather, err := weatherhandler.NewWeatherHandler(os.Getenv("WEATHER_API_TOKEN"))
 
 	if err != nil {
-		log.Panic(err)
+		logger.Panic(err.Error())
 	}
 
 	// Tell Telegram we should wait up to 30 seconds on each request for an
