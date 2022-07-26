@@ -1,47 +1,35 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
+	"github.com/albertoZurini/telegram-weather-bot/utils"
 	"os"
 	"strings"
 
-	"github.com/albertoZurini/telegram-weather-bot/weather_handler"
+	weatherhandler "github.com/albertoZurini/telegram-weather-bot/weatherHandlerAPI"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func main() {
-	telegram_token := os.Getenv("TELEGRAM_API_TOKEN")
-	chat_id := 0
+	utils.SetupLogger()
+	logger := utils.Logger
 
-	// BEGIN INIT
+	telegramToken := os.Getenv("TELEGRAM_API_TOKEN")
+
 	// Init Telegram
-	bot, err := tgbotapi.NewBotAPI(telegram_token)
+	bot, err := tgbotapi.NewBotAPI(telegramToken)
+
 	if err != nil {
-		log.Panic(err)
+		logger.Panic(err.Error())
 	}
+
 	bot.Debug = true
-
-	// Read users
-	jsonFile, err := ioutil.ReadFile("users.json")
-	// if we os.Open returns an error then handle it
-	if err != nil {
-		log.Panic(err)
-	}
-	var f map[string]interface{}
-	if err := json.Unmarshal(jsonFile, &f); err == nil {
-		chat_id = int(f["chatID"].(float64))
-	}
-	fmt.Print(chat_id)
-
-	weather, err := weather_handler.NewWeatherHandler(os.Getenv("WEATHER_API_TOKEN"))
-
-	//fmt.Println(weather.GetWeatherForLocation("Udine"))
-
-	// END INIT
 	updateConfig := tgbotapi.NewUpdate(0)
+	weather, err := weatherhandler.NewWeatherHandler(os.Getenv("WEATHER_API_TOKEN"))
+
+	if err != nil {
+		logger.Panic(err.Error())
+	}
 
 	// Tell Telegram we should wait up to 30 seconds on each request for an
 	// update. This way we can get information just as quickly as making many
@@ -59,22 +47,22 @@ func main() {
 		if update.Message.IsCommand() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 			msg.ReplyToMessageID = update.Message.MessageID
+
 			switch update.Message.Command() {
 			case "id":
 				msg.Text = fmt.Sprintf("Chat ID: %d", update.Message.Chat.ID)
 			case "help":
-				msg.Text = "Can't help you"
+				msg.Text = "This will display the bot's manual."
 			default:
-				msg.Text = "This is not a command"
+				msg.Text = "This is not a valid command."
 			}
 
 			if strings.Contains(update.Message.Command(), "getWeather") {
 				city := strings.Replace(update.Message.Command(), "getWeather", "", -1)
-
 				wi, err := weather.GetWeatherForLocation(city)
 
 				if err != nil {
-					msg.Text = "Error retrieving data"
+					msg.Text = "Error retrieving data."
 				} else {
 					msg.Text = wi.CurrentWeather
 				}
@@ -82,31 +70,17 @@ func main() {
 
 			bot.Send(msg)
 		} else {
-
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-
+			text := ""
 			wi, err := weather.GetWeatherForLocation(update.Message.Text)
 
-			if err == nil {
-				msg.Text = wi.CurrentWeather
+			if err != nil {
+				text = err.Error()
 			} else {
-				msg.Text = err.Error()
+				text = wi.CurrentWeather
 			}
 
-			fmt.Println(int(update.Message.Chat.ID))
-			fmt.Println(msg)
-			/*
-				w, err := getCurrent(update.Message.Text, "C", "EN")
-				if err != nil {
-					log.Fatalln(err)
-				}
-				/*msg.ReplyToMessageID = update.Message.MessageID
-				city := update.Message.Text
-				w.CurrentByName(city)*/
-
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 			bot.Send(msg)
 		}
-
-		//fmt.Println(w)
 	}
 }

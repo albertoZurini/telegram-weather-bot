@@ -1,4 +1,4 @@
-package weather_handler
+package weatherHandlerAPI
 
 import (
 	"fmt"
@@ -7,15 +7,9 @@ import (
 )
 
 type WeatherHandlerAPI struct {
-	Token string `json:"token"`
-
-	Client HTTPClient `json:"-"`
-
+	Token       string     `json:"token"`
+	Client      HTTPClient `json:"-"`
 	apiEndpoint string
-}
-
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
 }
 
 func NewWeatherHandler(token string) (*WeatherHandlerAPI, error) {
@@ -24,17 +18,12 @@ func NewWeatherHandler(token string) (*WeatherHandlerAPI, error) {
 
 func NewWeatherHandlerWithClient(token, apiEndpoint string, client HTTPClient) (*WeatherHandlerAPI, error) {
 	wa := &WeatherHandlerAPI{
-		Token:  token,
-		Client: client,
-
+		Token:       token,
+		Client:      client,
 		apiEndpoint: apiEndpoint,
 	}
 
 	return wa, nil
-}
-
-type WeatherInformation struct {
-	CurrentWeather string
 }
 
 func (wh *WeatherHandlerAPI) GetWeatherForLocation(location string) (*WeatherInformation, error) {
