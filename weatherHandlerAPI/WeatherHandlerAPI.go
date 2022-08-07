@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+
+	"github.com/albertoZurini/telegram-weather-bot/userHandler"
+	owm "github.com/briandowns/openweathermap"
 )
 
 type WeatherHandlerAPI struct {
@@ -46,4 +50,54 @@ func (wh *WeatherHandlerAPI) GetWeatherForLocation(location string) (*WeatherInf
 	}
 
 	return wi, nil
+}
+
+func (wi *WeatherHandlerAPI) GetDailyWeatherForLocationByName(cityName string) map[string]interface{} {
+	return map[string]interface{}{"todo": "none"}
+}
+
+/*
+func (wi *WeatherHandlerAPI) GetDailyWeatherForLocationByLocation(location userHandler.Location) (map[string]interface{}, error) {
+	endpoint := fmt.Sprintf("https://api.openweathermap.org/data/2.5/forecast?lat=%f&lon=%f&appid=%s&units=metric",
+		location.Coordinates[1], location.Coordinates[0], os.Getenv("OPENWEATHERMAP_API_TOKEN"))
+
+	resp, err := http.Get(endpoint)
+
+	if err != nil {
+		return nil, err
+	}
+
+	weatherInfoString, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var weatherInformation map[string]interface{}
+	err = json.Unmarshal([]byte(weatherInfoString), &weatherInformation)
+	if err != nil {
+		return nil, err
+	}
+
+	if weatherInformation["cod"].(string) != "200" {
+		return nil, fmt.Errorf("%s", weatherInformation["Message"].(string))
+	}
+
+	return weatherInformation, nil
+}
+*/
+
+func (wi *WeatherHandlerAPI) Get5DaysWeatherForLocationByLocation(location userHandler.Location) (*owm.ForecastWeatherData, error) {
+	w, err := owm.NewForecast("5", "C", "EN", os.Getenv("OPENWEATHERMAP_API_TOKEN")) // fahrenheit (imperial) with Russian output
+	if err != nil {
+		return nil, err
+	}
+
+	w.DailyByCoordinates(
+		&owm.Coordinates{
+			Longitude: location.Coordinates[0],
+			Latitude:  location.Coordinates[1],
+		}, 5)
+
+	return w, nil
 }
