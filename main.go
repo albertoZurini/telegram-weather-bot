@@ -44,6 +44,20 @@ func main() {
 			continue
 		}
 
+		if update.Message.Location != nil {
+			latLng := fmt.Sprintf("%f,%f", update.Message.Location.Latitude, update.Message.Location.Longitude)
+			wi, err := weather.GetWeatherForLocation(latLng)
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+
+			if err == nil {
+				msg.Text = wi.CurrentWeather
+			} else {
+				msg.Text = "Error"
+			}
+
+			bot.Send(msg)
+		}
+
 		if update.Message.IsCommand() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 			msg.ReplyToMessageID = update.Message.MessageID
