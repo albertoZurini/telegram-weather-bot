@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/albertoZurini/telegram-weather-bot/utils"
 	"os"
 	"strings"
 
+	"github.com/albertoZurini/telegram-weather-bot/MessageBeautifier"
+	"github.com/albertoZurini/telegram-weather-bot/utils"
+
+	userHandler "github.com/albertoZurini/telegram-weather-bot/userHandler"
 	weatherhandler "github.com/albertoZurini/telegram-weather-bot/weatherHandlerAPI"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -67,18 +70,30 @@ func main() {
 				msg.Text = fmt.Sprintf("Chat ID: %d", update.Message.Chat.ID)
 			case "help":
 				msg.Text = "This will display the bot's manual."
-			default:
-				msg.Text = "This is not a valid command."
-			}
-
-			if strings.Contains(update.Message.Command(), "getWeather") {
-				city := strings.Replace(update.Message.Command(), "getWeather", "", -1)
-				wi, err := weather.GetWeatherForLocation(city)
-
+			case "getWeather":
+				dbh, err := userHandler.NewDBHandler()
 				if err != nil {
-					msg.Text = "Error retrieving data."
+					fmt.Print(err)
+				}
+
+				loc, err := dbh.GetLocationForUser(update.Message.Chat.ID)
+				wi, err := weather.Get5DaysWeatherForLocationByLocation(loc)
+
+				asd := MessageBeautifier.BeautifyDailyWeatherMessage(wi)
+				msg.Text = asd
+
+			default:
+				if strings.Contains(update.Message.Command(), "getWeather") {
+					city := strings.Replace(update.Message.Command(), "getWeather", "", -1)
+					wi, err := weather.GetWeatherForLocation(city)
+
+					if err != nil {
+						msg.Text = "Error retrieving data."
+					} else {
+						msg.Text = wi.CurrentWeather
+					}
 				} else {
-					msg.Text = wi.CurrentWeather
+					msg.Text = "This is not a valid command."
 				}
 			}
 

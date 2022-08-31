@@ -1,6 +1,7 @@
 package weatherHandlerAPI
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -56,7 +57,6 @@ func (wi *WeatherHandlerAPI) GetDailyWeatherForLocationByName(cityName string) m
 	return map[string]interface{}{"todo": "none"}
 }
 
-/*
 func (wi *WeatherHandlerAPI) GetDailyWeatherForLocationByLocation(location userHandler.Location) (map[string]interface{}, error) {
 	endpoint := fmt.Sprintf("https://api.openweathermap.org/data/2.5/forecast?lat=%f&lon=%f&appid=%s&units=metric",
 		location.Coordinates[1], location.Coordinates[0], os.Getenv("OPENWEATHERMAP_API_TOKEN"))
@@ -85,7 +85,6 @@ func (wi *WeatherHandlerAPI) GetDailyWeatherForLocationByLocation(location userH
 
 	return weatherInformation, nil
 }
-*/
 
 func (wi *WeatherHandlerAPI) Get5DaysWeatherForLocationByLocation(location userHandler.Location) (*owm.ForecastWeatherData, error) {
 	w, err := owm.NewForecast("5", "C", "EN", os.Getenv("OPENWEATHERMAP_API_TOKEN")) // fahrenheit (imperial) with Russian output
@@ -95,8 +94,8 @@ func (wi *WeatherHandlerAPI) Get5DaysWeatherForLocationByLocation(location userH
 
 	w.DailyByCoordinates(
 		&owm.Coordinates{
-			Longitude: location.Coordinates[0],
-			Latitude:  location.Coordinates[1],
+			Longitude: location.Coordinates[1], // need to swap because of standard
+			Latitude:  location.Coordinates[0],
 		}, 5)
 
 	return w, nil

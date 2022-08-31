@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -165,5 +166,26 @@ func (dbh *DBHandler) GetCoordinatesForUser(UserId int64) string {
 		log.Fatal(err)
 	}
 
-	return usersFiltered[0]["CityName"].(string)
+	return usersFiltered[0]["CityName"].(string) // TODO
+}
+
+func (dbh *DBHandler) GetLocationForUser(UserId int64) (Location, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// attempt to get existing user
+	filterUser, err := dbh.usersCollection.Find(ctx, bson.M{"UserId": UserId})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var usersFiltered []bson.M
+	if err = filterUser.All(ctx, &usersFiltered); err != nil {
+		log.Fatal(err)
+	}
+
+	return Location{usersFiltered[0]["CityName"].(string),
+		[]float64{
+			usersFiltered[0]["Location"].(primitive.M)["coordinates"].(primitive.A)[0].(float64),
+			usersFiltered[0]["Location"].(primitive.M)["coordinates"].(primitive.A)[1].(float64),
+		}}, nil
 }
